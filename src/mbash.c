@@ -12,7 +12,7 @@ int pathidx;
 void mbash();
 char** parseCmd();
 
-int main(int argc, char** argv) {
+int main(int argc, char* argv[]) {
   char cmd[MAXLI];
 
   while (1) {
@@ -31,27 +31,27 @@ int main(int argc, char** argv) {
   return 0;
 }
 
-void mbash(char** p_cmd) {
-  printf("Execute: %s ", p_cmd[0]);
+void mbash(char* p_cmd[]) {
 
-  int p_cmd_size = 0;
-  while (p_cmd[p_cmd_size] != NULL) {
-    p_cmd_size++;
+  extern char **environ;
+  pid_t pid;
+  pid = fork();
+  int execRes;
+
+  switch (pid) {
+    case -1 :
+    perror("fork error");
+    break;
+
+    case 0 :
+    execRes = execve(p_cmd[0], (const char **)p_cmd, (const char **)environ);
+    if(execRes == -1) perror("exec error");
+    break;
+    
+    default:
+    wait(NULL);
+    break;
   }
-
-  printf(" size : %i", p_cmd_size);
-  printf("\n");
-
-  /*
-  
-  if(p_cmd_size > 1) {
-    for(int i = 1; i < p_cmd_size; i++) {
-      printf("arg %i : %s", i, p_cmd[i]);
-    }
-  }
-  */
-
-  //system(p_cmd[0]);
 }
 
 char** parseCmd(char* cmd) {
