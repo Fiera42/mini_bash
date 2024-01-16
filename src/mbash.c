@@ -20,6 +20,8 @@ int main(int argc, char* argv[]) {
 
   while (are_we_continuing) {
     printf("Commande: ");
+    
+    
     if(fgets(cmd, MAXLI, stdin) != NULL) {
      char** p_cmd = parseCmd(cmd);
 
@@ -60,6 +62,7 @@ void mbash(char* p_cmd[]) {
     case 0 :
     execRes = execve(p_cmd[0], (char *const*)p_cmd, (char *const*)environ);
     if(execRes == -1) perror("exec error");
+    exit(0);
     break;
     
     default:
