@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
 
      } else {
      
-      //utile pour execve, mais execvpe s'en charge pour nous
+      //utile pour execve, mais execvp s'en charge pour nous
       //char temp[256];
       //strcpy(temp, "/bin/");
       //strcat(temp, p_cmd[0]);
@@ -87,6 +87,7 @@ void mbash(char* p_cmd[]) {
     
     default:
     wait(NULL);
+    pid = 0;
     break;
   }
 }
