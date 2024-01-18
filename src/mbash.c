@@ -19,6 +19,7 @@ void mbash();
 char** parseCmd();
 void getCurrentDir();
 void handle_signal();
+void printhelp();
 
 int main(int argc, char* argv[]) {
   path_size = 20;
@@ -61,6 +62,8 @@ int main(int argc, char* argv[]) {
         printf("%s\n", current_path);
      } else if(strcmp(p_cmd[0], "cd") == 0) {
         chdir(p_cmd[1]);
+     } else if(strcmp(p_cmd[0], "help") == 0) {
+        printhelp();
      } else if(strcmp(p_cmd[0], "lprompt") == 0) {
         if(p_cmd[1] != NULL) {
            path_size = atoi(p_cmd[1]);      
@@ -137,7 +140,9 @@ char** parseCmd(char* cmd) {
   //Ecriture
   int i = 0;
   while (token != NULL) {
-    strcpy(p_cmd[i], token);
+    p_cmd[i] = strdup(token);
+    if(strcmp(p_cmd[i], "$$") == 0) sprintf(p_cmd[i], "%d", getpid());
+
     i++;
     token = strtok(NULL, " \t\n");
   }
@@ -157,12 +162,25 @@ void handle_signal(int signo) {
   else {
    wait(NULL);
    write_history("mbashHistory");
+   printf("\n");
    exit(0);
   }
   break;
   //case SIGINT:
   //break;
  }
+}
+
+void printhelp() {
+  printf("----Mbash HELP\n");
+  printf("cd : change directory\n");
+  printf("pwd : show current directory\n");
+  printf("exit : leave mbash\n");
+  printf("lprompt : change the lenght of the prompt\n");
+  printf("history : show the command history\n");
+  printf("$$ : converted into PID, try \"echo $$\"\n");
+  printf("for more commands, type \"exit\" then \"help\"\n");
+  printf("\n");
 }
 
 //Source : https://pubs.opengroup.org/onlinepubs/9699919799/functions/getcwd.html
