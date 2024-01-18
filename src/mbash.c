@@ -6,11 +6,13 @@
 #include <sys/wait.h>
 #include <stdbool.h> 
 #include <errno.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 
 
 #define MAXLI 2048
-char *path;
-char *dirName;
+char * current_path;
+int path_size;
 pid_t pid;
 
 void mbash();
@@ -19,29 +21,58 @@ void getCurrentDir();
 void handle_signal();
 
 int main(int argc, char* argv[]) {
+  path_size = 20;
   //Gestion de la commande
-  char cmd[MAXLI];
-  bool are_we_continuing = true;
+  char* cmd;
   
   //signaux
   signal(SIGINT, handle_signal); //CTRL+C
 
-  while (are_we_continuing) {
-    printf("Commande: ");
+  //historique
+  using_history();
+  read_history("mbashHistory");
+
+  while (1) {  
+    getCurrentDir();
+
     
+    //sprintf(prompt, "mbash:%s :", prompt);
+
+    char* prompt = (char*)malloc((strlen(current_path) + 16) * sizeof(char));
+    strcpy(prompt, current_path);
+
+    int length = strlen(current_path);
+    if(path_size < length) {
+     sprintf(prompt, "mbash : ...%.*s : ", path_size, current_path + (length - path_size));
+    } else sprintf(prompt, "mbash : %s : ", current_path);
     
-    if(fgets(cmd, MAXLI, stdin) != NULL) {
+
+    cmd = readline(prompt);
+    add_history(cmd);
+
+
+    if(cmd != NULL) {
      char** p_cmd = parseCmd(cmd);
-     getCurrentDir();
+     
 
      if(strcmp(p_cmd[0], "exit") == 0) {
-        are_we_continuing = false;
+        handle_signal(SIGINT);
      } else if(strcmp(p_cmd[0], "pwd") == 0) {
-        printf("%s", path);
+        printf("%s\n", current_path);
      } else if(strcmp(p_cmd[0], "cd") == 0) {
         chdir(p_cmd[1]);
+     } else if(strcmp(p_cmd[0], "lprompt") == 0) {
+        if(p_cmd[1] != NULL) {
+           path_size = atoi(p_cmd[1]);      
+	}
+        printf("path_size set to %d\n", path_size);
      } else if(strcmp(p_cmd[0], "history") == 0) {
-
+	HIST_ENTRY **historique = history_list();
+        if(historique != NULL) {
+	 for(int i = 0; historique[i] != NULL; i++) {
+	  printf("%d %s \n", i, historique[i]->line);
+         }
+        }
      } else {
      
       //utile pour execve, mais execvp s'en charge pour nous
@@ -58,11 +89,12 @@ int main(int argc, char* argv[]) {
        free(p_cmd[i]);
      }
      free(p_cmd);
+     free(prompt);
     }
   }
 
   wait(NULL);
-  
+  write_history("mbashHistory");
   return 0;
 }
 
@@ -124,6 +156,7 @@ void handle_signal(int signo) {
   }
   else {
    wait(NULL);
+   write_history("mbashHistory");
    exit(0);
   }
   break;
@@ -147,17 +180,18 @@ void getCurrentDir() {
       size = path_max;
 
   
-  for (buf = path = NULL; path == NULL; size *= 2) {
+  for (buf = current_path = NULL; current_path == NULL; size *= 2) {
       if ((buf = realloc(buf, size)) == NULL) {
           perror("realloc");
           exit(EXIT_FAILURE);
       }
 
-      path = getcwd(buf, size);
-      if (path == NULL && errno != ERANGE) {
+      char* temp = getcwd(buf, size);
+      if (temp == NULL && errno != ERANGE) {
           perror("getcwd");
           exit(EXIT_FAILURE);
       }
+      else current_path = strdup(temp);
   }
 
   free(buf);
