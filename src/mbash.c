@@ -11,6 +11,7 @@
 
 
 #define MAXLI 2048
+char historyPath[MAXLI];
 char * current_path;
 int path_size;
 pid_t pid;
@@ -22,6 +23,9 @@ void handle_signal();
 void printhelp();
 
 int main(int argc, char* argv[]) {
+  //printf("%s", getenv("HOME"));
+  sprintf(historyPath, "%s/mbashHistory.txt", getenv("HOME"));
+
   path_size = 20;
   //Gestion de la commande
   char* cmd;
@@ -31,7 +35,7 @@ int main(int argc, char* argv[]) {
 
   //historique
   using_history();
-  read_history("mbashHistory");
+  read_history(historyPath);
 
   while (1) {  
     getCurrentDir();
@@ -161,7 +165,7 @@ void handle_signal(int signo) {
   }
   else {
    wait(NULL);
-   write_history("mbashHistory");
+   write_history(historyPath);
    printf("\n");
    exit(0);
   }
